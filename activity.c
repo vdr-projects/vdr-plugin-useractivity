@@ -8,7 +8,6 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <syslog.h>
 #ifdef USE_XSS
 #include <X11/Xlib.h>
 #include <X11/extensions/scrnsaver.h>
@@ -19,10 +18,22 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <vdr/config.h>
-#if VDRVERSNUM >= 10501
 #include <vdr/shutdown.h>
-#endif
 #include "activity.h"
+
+#define MANUALSTART   600 // seconds the next timer must be in the future to assume manual start
+#define SLEEPSECCONDS 60  // seconds to sleep while checking for activity in automatic mode
+
+cUserActivity::cUserActivity() {
+  automatic = AutomaticStart();
+  lastInactivity = 0;
+  sleep = new cCondWait();
+}
+
+cUserActivity::~cUserActivity() {
+  Stop();
+  delete sleep;
+}
 
 #ifdef USE_XSS
 int cUserActivity::DisplayIdleTime(char *display) {
@@ -31,7 +42,7 @@ int cUserActivity::DisplayIdleTime(char *display) {
   static int event, error, result=-1;
 
   if (!(d = XOpenDisplay(display))) {
-    syslog(LOG_ERR, "useractivity: Unable to open DISPLAY %s\n", display);
+    esyslog("vdr-useractivity: Unable to open DISPLAY %s\n", display);
     return result;
   }
 
@@ -41,7 +52,7 @@ int cUserActivity::DisplayIdleTime(char *display) {
     result = (mitInfo->idle/1000)/60;
   }
   else {
-    syslog(LOG_ERR, "useractivity: MIT-SCREEN-SAVER missing\n");
+    esyslog("vdr-useractivity: MIT-SCREEN-SAVER missing\n");
     return result;
   }
 
@@ -84,7 +95,62 @@ int cUserActivity::IdleTime(struct utmp *uptr) {
   return idle;
 }
 
+int cUserActivity::MinIdleTime(void) {
+  struct utmp *uptr;
+  int idle;
+  int result=-1;
+
+  setutent();
+  while((uptr = getutent())!=NULL) {
+    if(uptr->ut_type == USER_PROCESS) {
+      idle = IdleTime(uptr);
+      if(idle >= 0 && (idle < result || result == -1)) {
+        result = idle;
+      }
+    }
+  }
+  endutent();
+  return result;
+}
+
+bool cUserActivity::AutomaticStart() {
+  time_t Delta = Setup.NextWakeupTime ? Setup.NextWakeupTime - time(NULL) : 0;
+
+  if(!Setup.NextWakeupTime || abs(Delta) > MANUALSTART) {
+    // Apparently the user started VDR manually
+    dsyslog("vdr-useractivity: assuming manual start of VDR");
+    return false;
+  }
+  else {
+    dsyslog("vdr-useractivity: scheduled wakeup time in %ld minutes, assuming automatic start of VDR", Delta / 60);
+    return true;
+  }
+}
+
+void cUserActivity::Action(void) {
+  int inactivity;
+  while (Running()) {
+    if(sleep->Wait(SLEEPSECCONDS * 1000))
+      break;
+    inactivity = min(GetUserInactivity(), MinIdleTime());
+    if(inactivity < 0) {
+      dsyslog("vdr-useractivity: invalid inactivity = %d", inactivity);
+      Stop();
+      break;      
+    }
+    if(inactivity < lastInactivity)
+    { dsyslog("vdr-useractivity: activity detected, inactivity = %d, lastInactivity = %d", inactivity, lastInactivity);
+      Stop();
+      break;
+    }
+    lastInactivity = inactivity;
+  }
+}
+
 bool cUserActivity::ActiveUsers(void) {
+  if(automatic)
+    return false;
+
   struct utmp *uptr;
   int idle;
   bool result=false;
@@ -103,11 +169,16 @@ bool cUserActivity::ActiveUsers(void) {
   return result;
 }
 
+void cUserActivity::Stop(void) {
+  automatic = false;
+  sleep->Signal();
+  if(Running())
+    Cancel(3);
+}
+
 void cUserActivity::SetMinUserInactivity(int minutes) {
   Setup.MinUserInactivity = minutes;
-#if VDRVERSNUM >= 10501
   ShutdownHandler.SetUserInactiveTimeout();
-#endif
 }    
 
 int cUserActivity::GetMinUserInactivity(void) {
@@ -120,9 +191,7 @@ char *cUserActivity::GetUsers(void) {
   using namespace std;
   stringstream stream;
 
-#if VDRVERSNUM >= 10501
   stream << "VDR user has been inactive " << GetUserInactivity() << " minutes." << endl;
-#endif
   stream << "USER           DEVICE         IDLE      HOST" << endl;
   setutent();
   while((uptr = getutent())!=NULL) {
@@ -146,7 +215,6 @@ char *cUserActivity::GetUsers(void) {
   return result;
 }
 
-#if VDRVERSNUM >= 10501
 int cUserActivity::GetUserInactivity(void) {
   return GetMinUserInactivity() ? 
            GetMinUserInactivity() - 1 -
@@ -156,5 +224,4 @@ int cUserActivity::GetUserInactivity(void) {
 void cUserActivity::UserActivity(void) {
   ShutdownHandler.SetUserInactiveTimeout();
 }
-#endif
 

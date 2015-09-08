@@ -7,10 +7,13 @@
  */
 
 #include <vdr/plugin.h>
-#include "i18n.h"
 #include "activity.h"
 
-static const char *VERSION        = "0.0.4";
+#if defined(APIVERSNUM) && APIVERSNUM < 10600
+#error "VDR-1.6.0 API version or greater is required!"
+#endif
+
+static const char *VERSION        = "0.1.0";
 static const char *DESCRIPTION    = trNOOP("Prevents shutdown if there are active users");
 #if 0
 static const char *MAINMENUENTRY  = trNOOP("Active users");
@@ -19,6 +22,7 @@ static const char *MAINMENUENTRY  = trNOOP("Active users");
 class cPluginUseractivity : public cPlugin {
 private:
   // Add any member variables or functions you may need here.
+  cUserActivity *activity;
 public:
   cPluginUseractivity(void);
   virtual ~cPluginUseractivity();
@@ -46,11 +50,13 @@ cPluginUseractivity::cPluginUseractivity(void)
   // Initialize any member variables here.
   // DON'T DO ANYTHING ELSE THAT MAY HAVE SIDE EFFECTS, REQUIRE GLOBAL
   // VDR OBJECTS TO EXIST OR PRODUCE ANY OUTPUT!
+  activity = NULL;
 }
 
 cPluginUseractivity::~cPluginUseractivity()
 {
   // Clean up after yourself!
+  delete activity;
 }
 
 const char *cPluginUseractivity::CommandLineHelp(void)
@@ -74,15 +80,16 @@ bool cPluginUseractivity::Initialize(void)
 bool cPluginUseractivity::Start(void)
 {
   // Start any background activities the plugin shall perform.
-#if VDRVERSNUM < 10507
-  RegisterI18n(Phrases);
-#endif
+  activity = new cUserActivity();
+  if(activity->IsAutomatic())
+    activity->Start();
   return true;
 }
 
 void cPluginUseractivity::Stop(void)
 {
   // Stop any background activities the plugin shall perform.
+  activity->Stop();
 }
 
 void cPluginUseractivity::Housekeeping(void)
@@ -99,7 +106,7 @@ void cPluginUseractivity::MainThreadHook(void)
 cString cPluginUseractivity::Active(void)
 {
   // Return a message string if shutdown should be postponed
-  if(cUserActivity::ActiveUsers())
+  if(activity->ActiveUsers())
     return tr("There are active users in the system");
   else
     return NULL;
@@ -137,10 +144,8 @@ const char **cPluginUseractivity::SVDRPHelpPages(void)
     "    Display minimum user inactivity in minutes.",
     "LSTU\n"
     "    Display a list of users.",
-#if VDRVERSNUM >= 10501
     "SETA\n"
-    "    Set VDR user activity.",
-#endif
+    "    Set VDR user active.",
     "SETI <minutes>\n"
     "    Set minimum user inactivity in minutes.",
     NULL
@@ -153,24 +158,18 @@ cString cPluginUseractivity::SVDRPCommand(const char *Command, const char *Optio
   // Process SVDRP commands this plugin implements
   if (strcasecmp(Command, "GETI") == 0) {
     // we use the default reply code here
-#if VDRVERSNUM >= 10501
     return cString::sprintf("Minimum user inactivity is %d minutes.\nVDR user has been inactive %d minutes.", 
                              cUserActivity::GetMinUserInactivity(), cUserActivity::GetUserInactivity());
-#else
-    return cString::sprintf("Minimum user inactivity is %d minutes.", cUserActivity::GetMinUserInactivity());
-#endif
   }
   else if (strcasecmp(Command, "LSTU") == 0) {
     // we use the default reply code here
     return cString(cUserActivity::GetUsers());
   }
-#if VDRVERSNUM >= 10501
   else if (strcasecmp(Command, "SETA") == 0) {
     // we use the default reply code here
     cUserActivity::UserActivity();
     return cString::sprintf("VDR user set active.");  
-}
-#endif
+  }
   else if (strcasecmp(Command, "SETI") == 0) {
     ReplyCode = 501;
     if (*Option) {

@@ -1,6 +1,13 @@
 VDR Plugin 'useractivity' Revision History
 ------------------------------------------
 
+2009-03-13: Version 0.1.0
+
+- Italian translations by Diego Pierotto
+- Converted translation files to UTF-8
+- Check for automatic start added
+- Support for VDR < 1.6.0 dropped
+
 2007-11-26: Version 0.0.4
 
 - Fixed X activity detection for Ubuntu 7.10.

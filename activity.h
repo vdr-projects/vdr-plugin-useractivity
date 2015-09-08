@@ -10,23 +10,33 @@
 #define _USERACTILITY_ACTIVITY_H
 
 #include <utmp.h>
+#include <vdr/thread.h>
 
-class cUserActivity {
+class cUserActivity : public cThread {
   private:
+    bool automatic;
+    int lastInactivity;
+    cCondWait *sleep;
 #ifdef USE_XSS
     static int DisplayIdleTime(char *display);
 #endif
     static int DeviceIdleTime(char *device);
     static int IdleTime(struct utmp *uptr);
+    static int MinIdleTime();
+    static bool AutomaticStart();
+  protected:
+    virtual void Action(void);
   public:
-    static bool ActiveUsers(void);    
+    cUserActivity();
+    ~cUserActivity();
+    bool ActiveUsers(void);    
+    bool IsAutomatic(void) { return automatic; }
+    void Stop(void);
     static void SetMinUserInactivity(int minutes);    
     static int GetMinUserInactivity(void);    
     static char *GetUsers(void);
-#if VDRVERSNUM >= 10501
     static int GetUserInactivity(void);
     static void UserActivity(void);
-#endif
 };
 
 #endif
