@@ -69,7 +69,9 @@ OBJS = $(PLUGIN).o activity.o i18n.o
 
 ### Libraries
 
-LIBS = -lX11 -lXss
+ifeq ($(USERACTIVITY_XSS), 1)
+  LIBS = -lX11 -lXss
+endif
 
 ### Implicit rules:
 

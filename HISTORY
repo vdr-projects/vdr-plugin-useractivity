@@ -1,6 +1,17 @@
 VDR Plugin 'useractivity' Revision History
 ------------------------------------------
 
+2007-11-26: Version 0.0.4
+
+- Fixed X activity detection for Ubuntu 7.10.
+- Fixed compilation without XSS.
+- Added host to LSTU printout.
+- Fixed SVDRP command SETI for VDR 1.5.1 and later.
+
+2007-09-11: Version 0.0.3
+
+- New SVDRP command SETA.
+
 2007-08-19: Version 0.0.2
 
 - Updated for VDR 1.5.8.

@@ -67,6 +67,22 @@ int cUserActivity::DeviceIdleTime(char *device) {
   return idle;
 }
 
+int cUserActivity::IdleTime(struct utmp *uptr) {
+  int idle = -1;
+#ifdef USE_XSS
+  /* Detecting display idle time for ut_hosts     *
+   * without screen. This is based on Ubuntu 7.10 *
+   * where X has valid device in ut_line.         */
+  char *cptr = strchr(uptr->ut_host, ':');
+  if(cptr != NULL ) {
+    if(strchr(cptr+1,'.') == NULL)
+      idle = DisplayIdleTime(uptr->ut_host);
+  }
+#endif
+  if(idle < 0)
+    idle = DeviceIdleTime(uptr->ut_line); 
+  return idle;
+}
 
 bool cUserActivity::ActiveUsers(void) {
   struct utmp *uptr;
@@ -76,11 +92,7 @@ bool cUserActivity::ActiveUsers(void) {
   setutent();
   while((uptr = getutent())!=NULL) {
     if(uptr->ut_type == USER_PROCESS) {
-      idle = DeviceIdleTime(uptr->ut_line);
-#ifdef USE_XSS
-      if(idle < 0 && strchr(uptr->ut_line, ':') != NULL)
-        idle = DisplayIdleTime(uptr->ut_line);
-#endif
+      idle = IdleTime(uptr);
       if(idle >= 0 && idle < Setup.MinUserInactivity) {
         result = true;
         break;
@@ -93,6 +105,9 @@ bool cUserActivity::ActiveUsers(void) {
 
 void cUserActivity::SetMinUserInactivity(int minutes) {
   Setup.MinUserInactivity = minutes;
+#if VDRVERSNUM >= 10501
+  ShutdownHandler.SetUserInactiveTimeout();
+#endif
 }    
 
 int cUserActivity::GetMinUserInactivity(void) {
@@ -108,21 +123,19 @@ char *cUserActivity::GetUsers(void) {
 #if VDRVERSNUM >= 10501
   stream << "VDR user has been inactive " << GetUserInactivity() << " minutes." << endl;
 #endif
-  stream << "USER           DEVICE         IDLE" << endl;
+  stream << "USER           DEVICE         IDLE      HOST" << endl;
   setutent();
   while((uptr = getutent())!=NULL) {
     if(uptr->ut_type == USER_PROCESS) {
-      idle = DeviceIdleTime(uptr->ut_line);
-#ifdef USE_XSS
-      if(idle < 0 && strchr(uptr->ut_line, ':') != NULL)
-        idle = DisplayIdleTime(uptr->ut_line);
-#endif
+      idle = IdleTime(uptr);
       stream.width(15);
       stream << left << uptr->ut_user;
       stream.width(15);
       stream << left << uptr->ut_line;
+      stream.width(10);
+      stream << left << idle;
       stream.width(0);
-      stream << idle << endl;
+      stream << uptr->ut_host << endl;
     }
   }
   endutent();

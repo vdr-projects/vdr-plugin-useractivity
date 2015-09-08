@@ -10,7 +10,7 @@
 #include "i18n.h"
 #include "activity.h"
 
-static const char *VERSION        = "0.0.3";
+static const char *VERSION        = "0.0.4";
 static const char *DESCRIPTION    = trNOOP("Prevents shutdown if there are active users");
 #if 0
 static const char *MAINMENUENTRY  = trNOOP("Active users");

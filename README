@@ -18,6 +18,8 @@ GETI
     Display minimum user inactivity in minutes.
 LSTU
     Display a list of users.
+SETA
+    Set VDR user activity.
 SETI <minutes>
     Set minimum user inactivity in minutes.
 
