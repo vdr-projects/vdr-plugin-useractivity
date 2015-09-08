@@ -10,9 +10,11 @@
 #include "i18n.h"
 #include "activity.h"
 
-static const char *VERSION        = "0.0.1";
-static const char *DESCRIPTION    = "Prevents shutdown if there are active users";
-//static const char *MAINMENUENTRY  = "Active users";
+static const char *VERSION        = "0.0.2";
+static const char *DESCRIPTION    = trNOOP("Prevents shutdown if there are active users");
+#if 0
+static const char *MAINMENUENTRY  = trNOOP("Active users");
+#endif
 
 class cPluginUseractivity : public cPlugin {
 private:
@@ -30,7 +32,7 @@ public:
   virtual void Housekeeping(void);
   virtual void MainThreadHook(void);
   virtual cString Active(void);
-  virtual const char *MainMenuEntry(void) { return NULL; /* tr(MAINMENUENTRY) */ }
+  virtual const char *MainMenuEntry(void) { return NULL; }
   virtual cOsdObject *MainMenuAction(void);
   virtual cMenuSetupPage *SetupMenu(void);
   virtual bool SetupParse(const char *Name, const char *Value);
@@ -72,7 +74,9 @@ bool cPluginUseractivity::Initialize(void)
 bool cPluginUseractivity::Start(void)
 {
   // Start any background activities the plugin shall perform.
+#if VDRVERSNUM < 10507
   RegisterI18n(Phrases);
+#endif
   return true;
 }
 

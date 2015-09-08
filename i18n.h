@@ -11,6 +11,12 @@
 
 #include <vdr/i18n.h>
 
+#ifndef trNOOP
+#define trNOOP(s) (s)
+#endif
+
+#if VDRVERSNUM < 10507
 extern const tI18nPhrase Phrases[];
+#endif
 
 #endif //_I18N__H

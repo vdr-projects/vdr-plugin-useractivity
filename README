@@ -12,17 +12,16 @@ Description:
 
 Plugin prevents shutdown if there are active X or terminal users.
 
-Plugin also implements the followin SVDRP commands.
+Plugin also implements the following SVDRP commands.
 
 GETI
     Display minimum user inactivity in minutes.
 LSTU
     Display a list of users.
 SETI <minutes>
-    Sets minimum user inactivity in minutes.
+    Set minimum user inactivity in minutes.
 
 Requirements:
-
 - utmp
 - X11 Screen Saver extension (optional)
 
@@ -30,3 +29,8 @@ Xauthority:
 
 Depending on the way you start VDR, you might need to setup Xauthority 
 in order to get idle the time from X window.
+
+Converter for po files (po2i18n):
+- Written by Udo Richter <udo_richter@gmx.de>
+- Project's homepage http://www.udo-richter.de/vdr/scripts.html#po2i18n
+                     http://www.udo-richter.de/vdr/scripts.en.html#po2i18n

@@ -76,18 +76,46 @@ LIBS = -lX11 -lXss
 %.o: %.c
 	$(CXX) $(CXXFLAGS) -c $(DEFINES) $(INCLUDES) $<
 
+i18n.c: i18n-template.c po2i18n.pl
+	./po2i18n.pl < i18n-template.c > i18n.c
+
 # Dependencies:
 
 MAKEDEP = $(CXX) -MM -MG
 DEPFILE = .dependencies
-$(DEPFILE): Makefile
+$(DEPFILE): Makefile i18n.c
 	@$(MAKEDEP) $(DEFINES) $(INCLUDES) $(OBJS:%.o=%.c) > $@
 
 -include $(DEPFILE)
 
+### Internationalization (I18N):
+
+PODIR     = po
+LOCALEDIR = $(VDRDIR)/locale
+I18Npo    = $(wildcard $(PODIR)/*.po)
+I18Nmo    = $(addsuffix .mo, $(foreach file, $(I18Npo), $(basename $(file))))
+I18Ndirs  = $(notdir $(foreach file, $(I18Npo), $(basename $(file))))
+I18Npot   = $(PODIR)/$(PLUGIN).pot
+
+%.mo: %.po
+	msgfmt -c -o $@ $<
+
+$(I18Npot): $(wildcard *.c)
+	xgettext -C -cTRANSLATORS --no-wrap -F -k -ktr -ktrNOOP --msgid-bugs-address='<timo@tolleri.net>' -o $@ $(wildcard *.c)
+
+$(I18Npo): $(I18Npot)
+	msgmerge -U --no-wrap -F --backup=none -q $@ $<
+
+i18n: $(I18Nmo)
+	@mkdir -p $(LOCALEDIR)
+	for i in $(I18Ndirs); do\
+	    mkdir -p $(LOCALEDIR)/$$i/LC_MESSAGES;\
+	    cp $(PODIR)/$$i.mo $(LOCALEDIR)/$$i/LC_MESSAGES/vdr-$(PLUGIN).mo;\
+	    done
+
 ### Targets:
 
-all: libvdr-$(PLUGIN).so
+all: libvdr-$(PLUGIN).so i18n
 
 libvdr-$(PLUGIN).so: $(OBJS)
 	$(CXX) $(CXXFLAGS) -shared $(OBJS) $(LIBS) -o $@
@@ -102,4 +130,5 @@ dist: clean
 	@echo Distribution package created as $(PACKAGE).tgz
 
 clean:
-	@-rm -f $(OBJS) $(DEPFILE) *.so *.tgz core* *~
+	@-rm -f $(PODIR)/*.mo $(PODIR)/*.pot
+	@-rm -f $(OBJS) $(DEPFILE) i18n.c *.so *.tgz core* *~
