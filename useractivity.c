@@ -13,7 +13,7 @@
 #error "VDR-1.6.0 API version or greater is required!"
 #endif
 
-static const char *VERSION        = "0.1.1";
+static const char *VERSION        = "0.1.2";
 static const char *DESCRIPTION    = trNOOP("Prevents shutdown if there are active users");
 #if 0
 static const char *MAINMENUENTRY  = trNOOP("Active users");

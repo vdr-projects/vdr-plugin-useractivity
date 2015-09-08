@@ -1,6 +1,9 @@
 VDR Plugin 'useractivity' Revision History
 ------------------------------------------
 
+2015-09-08: Version 0.1.2
+- New Makefile handling up from vdr-1.7.34
+
 2011-07-16: Version 0.1.1
 - Updated Makefile
 
