@@ -9,14 +9,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <syslog.h>
+#ifdef USE_XSS
 #include <X11/Xlib.h>
 #include <X11/extensions/scrnsaver.h>
+#endif
 #include <utmp.h>
 #include <string.h>
 #include <sstream>
 #include <sys/stat.h>
 #include <time.h>
 #include <vdr/config.h>
+#if VDRVERSNUM >= 10501
+#include <vdr/shutdown.h>
+#endif
 #include "activity.h"
 
 #ifdef USE_XSS
@@ -100,6 +105,9 @@ char *cUserActivity::GetUsers(void) {
   using namespace std;
   stringstream stream;
 
+#if VDRVERSNUM >= 10501
+  stream << "VDR user has been inactive " << GetUserInactivity() << " minutes." << endl;
+#endif
   stream << "USER           DEVICE         IDLE" << endl;
   setutent();
   while((uptr = getutent())!=NULL) {
@@ -124,3 +132,16 @@ char *cUserActivity::GetUsers(void) {
   strcpy(result, resultString.c_str());
   return result;
 }
+
+#if VDRVERSNUM >= 10501
+int cUserActivity::GetUserInactivity(void) {
+  return GetMinUserInactivity() ? 
+           GetMinUserInactivity() - 1 -
+             (ShutdownHandler.GetUserInactiveTime() - time(NULL))/60 : -1;
+}
+
+void cUserActivity::UserActivity(void) {
+  ShutdownHandler.SetUserInactiveTimeout();
+}
+#endif
+

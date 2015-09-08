@@ -10,7 +10,7 @@
 #include "i18n.h"
 #include "activity.h"
 
-static const char *VERSION        = "0.0.2";
+static const char *VERSION        = "0.0.3";
 static const char *DESCRIPTION    = trNOOP("Prevents shutdown if there are active users");
 #if 0
 static const char *MAINMENUENTRY  = trNOOP("Active users");
@@ -137,6 +137,10 @@ const char **cPluginUseractivity::SVDRPHelpPages(void)
     "    Display minimum user inactivity in minutes.",
     "LSTU\n"
     "    Display a list of users.",
+#if VDRVERSNUM >= 10501
+    "SETA\n"
+    "    Set VDR user activity.",
+#endif
     "SETI <minutes>\n"
     "    Set minimum user inactivity in minutes.",
     NULL
@@ -149,12 +153,24 @@ cString cPluginUseractivity::SVDRPCommand(const char *Command, const char *Optio
   // Process SVDRP commands this plugin implements
   if (strcasecmp(Command, "GETI") == 0) {
     // we use the default reply code here
+#if VDRVERSNUM >= 10501
+    return cString::sprintf("Minimum user inactivity is %d minutes.\nVDR user has been inactive %d minutes.", 
+                             cUserActivity::GetMinUserInactivity(), cUserActivity::GetUserInactivity());
+#else
     return cString::sprintf("Minimum user inactivity is %d minutes.", cUserActivity::GetMinUserInactivity());
+#endif
   }
   else if (strcasecmp(Command, "LSTU") == 0) {
     // we use the default reply code here
     return cString(cUserActivity::GetUsers());
   }
+#if VDRVERSNUM >= 10501
+  else if (strcasecmp(Command, "SETA") == 0) {
+    // we use the default reply code here
+    cUserActivity::UserActivity();
+    return cString::sprintf("VDR user set active.");  
+}
+#endif
   else if (strcasecmp(Command, "SETI") == 0) {
     ReplyCode = 501;
     if (*Option) {

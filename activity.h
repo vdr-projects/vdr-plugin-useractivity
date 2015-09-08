@@ -20,6 +20,10 @@ class cUserActivity {
     static void SetMinUserInactivity(int minutes);    
     static int GetMinUserInactivity(void);    
     static char *GetUsers(void);
+#if VDRVERSNUM >= 10501
+    static int GetUserInactivity(void);
+    static void UserActivity(void);
+#endif
 };
 
 #endif
