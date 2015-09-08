@@ -1,0 +1,32 @@
+This is a "plugin" for the Video Disk Recorder (VDR).
+
+Written by:                  Timo Eskola <timo@tolleri.net>
+
+Project's homepage:          http://www.tolleri.net/vdr
+
+Latest version available at: http://www.tolleri.net/vdr
+
+See the file COPYING for license information.
+
+Description:
+
+Plugin prevents shutdown if there are active X or terminal users.
+
+Plugin also implements the followin SVDRP commands.
+
+GETI
+    Display minimum user inactivity in minutes.
+LSTU
+    Display a list of users.
+SETI <minutes>
+    Sets minimum user inactivity in minutes.
+
+Requirements:
+
+- utmp
+- X11 Screen Saver extension (optional)
+
+Xauthority:
+
+Depending on the way you start VDR, you might need to setup Xauthority 
+in order to get idle the time from X window.
