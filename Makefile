@@ -6,7 +6,7 @@
 # The official name of this plugin.
 # This name will be used in the '-P...' option of VDR to load the plugin.
 # By default the main source file also carries this name.
-# IPORTANT: the presence of this macro is important for the Make.config
+# IMPORTANT: the presence of this macro is important for the Make.config
 # file. So it must be defined, even if it is not used here!
 #
 PLUGIN = useractivity
@@ -32,13 +32,17 @@ VERSION = $(shell grep 'static const char \*VERSION *=' $(PLUGIN).c | awk '{ pri
 ### The C++ compiler and options:
 
 CXX      ?= g++
-CXXFLAGS ?= -fPIC -g -O2 -Wall -Woverloaded-virtual
+CXXFLAGS ?= -g -O3 -Wall -Woverloaded-virtual -Wno-parentheses
 
 ### The directory environment:
 
 VDRDIR = ../../..
 LIBDIR = ../../lib
 TMPDIR = /tmp
+
+### Make sure that necessary options are included:
+
+include $(VDRDIR)/Make.global
 
 ### Allow user defined options to overwrite defaults:
 
@@ -73,16 +77,20 @@ ifeq ($(USERACTIVITY_XSS), 1)
   LIBS = -lX11 -lXss
 endif
 
+### The main target:
+
+all: libvdr-$(PLUGIN).so i18n
+
 ### Implicit rules:
 
 %.o: %.c
 	$(CXX) $(CXXFLAGS) -c $(DEFINES) $(INCLUDES) $<
 
-# Dependencies:
+### Dependencies:
 
 MAKEDEP = $(CXX) -MM -MG
 DEPFILE = .dependencies
-$(DEPFILE): Makefile i18n.c
+$(DEPFILE): Makefile
 	@$(MAKEDEP) $(DEFINES) $(INCLUDES) $(OBJS:%.o=%.c) > $@
 
 -include $(DEPFILE)
@@ -99,14 +107,14 @@ I18Npot   = $(PODIR)/$(PLUGIN).pot
 	msgfmt -c -o $@ $<
 
 $(I18Npot): $(wildcard *.c)
-	xgettext -C -cTRANSLATORS --no-wrap --no-location -k -ktr -ktrNOOP --msgid-bugs-address='<timo@tolleri.net>' -o $@ $^
+	xgettext -C -cTRANSLATORS --no-wrap --no-location -k -ktr -ktrNOOP --package-name=vdr-$(PLUGIN) --package-version=$(VERSION) --msgid-bugs-address='<see README>' -o $@ $^
 
 %.po: $(I18Npot)
 	msgmerge -U --no-wrap --no-location --backup=none -q $@ $<
 	@touch $@
 
 $(I18Nmsgs): $(LOCALEDIR)/%/LC_MESSAGES/vdr-$(PLUGIN).mo: $(PODIR)/%.mo
-	@mkdir -p $(dir \$@)
+	@mkdir -p $(dir $@)
 	cp $< $@
 
 .PHONY: i18n
@@ -114,13 +122,11 @@ i18n: $(I18Nmsgs) $(I18Npot)
 
 ### Targets:
 
-all: libvdr-$(PLUGIN).so i18n
-
 libvdr-$(PLUGIN).so: $(OBJS)
-	$(CXX) $(CXXFLAGS) -shared $(OBJS) $(LIBS) -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -shared $(OBJS) $(LIBS) -o $@
 	@cp --remove-destination $@ $(LIBDIR)/$@.$(APIVERSION)
 
-dist: clean
+dist: $(I18Npo) clean
 	@-rm -rf $(TMPDIR)/$(ARCHIVE)
 	@mkdir $(TMPDIR)/$(ARCHIVE)
 	@cp -a * $(TMPDIR)/$(ARCHIVE)
@@ -129,5 +135,4 @@ dist: clean
 	@echo Distribution package created as $(PACKAGE).tgz
 
 clean:
-	@-rm -f $(PODIR)/*.mo $(PODIR)/*.pot
-	@-rm -f $(OBJS) $(DEPFILE) i18n.c *.so *.tgz core* *~
+	@-rm -f $(OBJS) $(DEPFILE) *.so *.tgz core* *~ $(PODIR)/*.mo $(PODIR)/*.pot

@@ -1,6 +1,9 @@
 VDR Plugin 'useractivity' Revision History
 ------------------------------------------
 
+2011-07-16: Version 0.1.1
+- Updated Makefile
+
 2009-03-13: Version 0.1.0
 
 - Italian translations by Diego Pierotto

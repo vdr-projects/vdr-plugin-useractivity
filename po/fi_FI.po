@@ -1,19 +1,17 @@
-# VDR plugin language source file.
-# Copyright (C) 2007 Klaus Schmidinger <kls@cadsoft.de>
-# This file is distributed under the same license as the VDR package.
-# Hannu Savolainen <hannu@opensound.com>, 2002
-# Jaakko Hyvätti <jaakko@hyvatti.iki.fi>, 2002
-# Niko Tarnanen <niko.tarnanen@hut.fi>, 2003
-# Rolf Ahrenberg <rahrenbe@cc.hut.fi>, 2003
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Timo Eskola <timo@tolleri.net>, 2007.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: vdr-useractivity 0.1.0\n"
-"Report-Msgid-Bugs-To: <timo@tolleri.net>\n"
-"POT-Creation-Date: 2009-03-13 09:20+0200\n"
+"Report-Msgid-Bugs-To: <see README>\n"
+"POT-Creation-Date: 2011-06-02 21:32+0300\n"
 "PO-Revision-Date: 2007-08-19 22:15+0300\n"
 "Last-Translator: Timo Eskola <timo@tolleri.net>\n"
 "Language-Team: <vdr@linuxtv.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
